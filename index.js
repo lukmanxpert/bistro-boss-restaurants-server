@@ -31,6 +31,12 @@ async function run() {
     })
 
 
+    app.get("/menus", async(req, res)=>{
+        const result = await menusCollection.find().toArray()
+        res.send(result)
+    })
+
+
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
