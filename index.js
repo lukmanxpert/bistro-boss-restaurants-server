@@ -3,7 +3,7 @@ const cors = require("cors");
 const port = process.env.PORT || 9000;
 const app = express();
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.db_user}:${process.env.db_pass}@cluster0.l73rt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 app.use(cors());
@@ -37,7 +37,9 @@ async function run() {
     });
 
     app.get("/all-carts", async (req, res) => {
-      const result = await cartsCollection.find().toArray();
+      const email = req.query.email;
+      const query = { productEmail: email };
+      const result = await cartsCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -45,6 +47,13 @@ async function run() {
       const data = req.body;
       const result = await cartsCollection.insertOne(data);
       res.send(result);
+    });
+
+    app.delete("/delete-cart/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await cartsCollection.deleteOne(query)
+      res.send(result)
     });
 
     console.log(
