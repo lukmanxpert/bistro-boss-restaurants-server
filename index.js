@@ -25,6 +25,7 @@ async function run() {
     const menusCollection = db.collection("menus");
     const reviewsCollection = db.collection("reviews");
     const cartsCollection = db.collection("carts");
+    const usersCollection = db.collection("users");
 
     app.get("/reviews", async (req, res) => {
       const result = await reviewsCollection.find().toArray();
@@ -49,11 +50,17 @@ async function run() {
       res.send(result);
     });
 
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
     app.delete("/delete-cart/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
-      const result = await cartsCollection.deleteOne(query)
-      res.send(result)
+      const query = { _id: new ObjectId(id) };
+      const result = await cartsCollection.deleteOne(query);
+      res.send(result);
     });
 
     console.log(
