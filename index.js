@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 9000;
 const app = express();
 require("dotenv").config();
@@ -26,6 +27,15 @@ async function run() {
     const reviewsCollection = db.collection("reviews");
     const cartsCollection = db.collection("carts");
     const usersCollection = db.collection("users");
+
+    // token related apis
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.access_token, {
+        expiresIn: "1hr",
+      });
+      res.send({ token });
+    });
 
     app.get("/reviews", async (req, res) => {
       const result = await reviewsCollection.find().toArray();
@@ -62,7 +72,23 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/users", async (req, res) => {
+    // middleware
+    const verifyToken = (req, res, next) => {
+      console.log("Inside the verify token", req.headers.authorization);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: "forbidden access" });
+      }
+      const token = req.headers.authorization.split(" ")[1];
+      jwt.verify(token, process.env.access_token, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({message: 'forbidden access'})
+        }
+        req.decoded = decoded
+        next();
+      });
+    };
+
+    app.get("/users", verifyToken, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
@@ -82,8 +108,8 @@ async function run() {
           role: "admin",
         },
       };
-      const result = await usersCollection.updateOne(filter, updateDoc)
-      res.send(result)
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
 
     app.delete("/delete-cart/:id", async (req, res) => {
